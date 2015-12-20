@@ -27,7 +27,7 @@ class Data {
 		global $CODE2TABLE;
 		$table = $CODE2TABLE[$dataItemCode];
 		$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
-		$result = mysql_query($sql, $this->conn_);
+        $result = mysql_query($sql, $this->conn_);
 		$ret = array();
 		while ($row = mysql_fetch_assoc($result)) {
 			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
@@ -67,10 +67,11 @@ class Data {
 		$year = substr($ym, 0, 4);
 		$mon = substr($ym, 4, 2);
 		$t = strtotime("$year-$mon"); 
-		$t += 31 * 86400;
-		$dataTime = date('Y-m-d', strtotime(date('Y-m-01', $t)) - 1);
+        $t += 31 * 86400;
+		$dataTimeBeg = "$year-$mon-01";
+		$dataTimeEnd = date('Y-m-d', strtotime(date('Y-m-01', $t)) - 1);
 		
-		$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' order by id desc limit 1";
+		$sql = "select * from {$table} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' order by id desc limit 1";
 		$result = mysql_query($sql, $this->conn_);
 		$ret = array();
 		while ($row = mysql_fetch_assoc($result)) {

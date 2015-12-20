@@ -31,7 +31,7 @@ function HandleCmdDailyFreez($data, $emsClient, $dataItemCode, $dataTime) {
 }
 
 function HandleCmdMonFreez($data, $emsClient, $dataItemCode, $ym) {
-	$result = $data->monFreez($dataItemCode, $ym);
+    $result = $data->monFreez($dataItemCode, $ym);
 	if (!is_array($result) || !count($result)) { // 没有数据不提交
 		return;
 	}

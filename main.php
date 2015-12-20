@@ -20,7 +20,7 @@ require_once 'Config.php';
 
 if ($argc < 2 ||
 		 !in_array($argv[1], array('monitorPointCurveService', 'monitorDailyFreezService', 'monitorMonFreezService'))) {
-	echo 'usage: php main.php [monitorPointCurveService|monitorDailyFreezService|monitorMonFreezService]' . PHP_EOL;
+	echo 'usage: php main.php monitorPointCurveService|monitorDailyFreezService|monitorMonFreezService [reportDate]' . PHP_EOL;
 	return;
 }
 
@@ -31,24 +31,30 @@ $cmd = $argv[1];
 $data = new Data();
 
 // Webservice客户端
-//$emsClient = new EmsClient();
+$emsClient = new EmsClient();
+
+// 计算上报日期
+if ($argc == 2) { // 没有指定上报日期, 默认上报"昨天/上个月"的数据
+    $now = time();
+    $reportDate = date('Y-m-d', $now - 86400);
+    $reportMonth = date('Ym', strtotime(date('Y-m-01', $now)) - 1);
+} else { // 指定了日期, 那么上报指定日期的数据
+    $t = strtotime($argv[2]);
+    $reportDate = date('Y-m-d', $t);
+    $reportMonth = date('Ym', $t);
+}
 
 // 处理上报
-//$now = time();
-$now = strtotime('2015-12-11');
-$yesterday = date('Y-m-d', $now - 86400);
-$lastMonth = date('Ym', strtotime(date('Y-m-01', $now)) - 1);
-
 foreach ($CODE_LIST as $dataItemCode) {
 	switch ($cmd) {
 		case 'monitorPointCurveService':
-			HandleCmdPointCurve($data, $emsClient, $dataItemCode, $yesterday);
+			HandleCmdPointCurve($data, $emsClient, $dataItemCode, $reportDate);
 			break;
 		case 'monitorDailyFreezService':
-			HandleCmdDailyFreez($data, $emsClient, $dataItemCode, $yesterday);
+			HandleCmdDailyFreez($data, $emsClient, $dataItemCode, $reportDate);
 			break;
 		case 'monitorMonFreezService':
-			HandleCmdMonFreez($data, $emsClient, $dataItemCode, $lastMonth);
+			HandleCmdMonFreez($data, $emsClient, $dataItemCode, $reportMonth);
 			break;
 	}
 }
