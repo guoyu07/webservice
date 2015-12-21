@@ -11,6 +11,57 @@ require_once 'Proc.php';
 class Data {	
 	// MYSQL连接
 	private $conn_ = null;
+	// 缓存最近一次查询结果(提高同表多数据项上报的处理性能)
+	private $lastCacheKey_ = null;
+	private $lastCacheValue_ = null;
+	
+	/**
+	 * 获取最近一次缓存的查询结果
+	 * @param unknown $cacheKey
+	 * @return
+	 */
+	private function getCache($cacheKey) {
+		if ($this->lastCacheKey_ == $cacheKey) {
+			return $this->lastCacheValue_;
+		}
+		return false;
+	}
+	
+	/**
+	 * 设置缓存
+	 * @param unknown $cacheKey
+	 * @param unknown $cacheValue
+	 * @return
+	 */
+	private function setCache($cacheKey, $cacheValue) {
+		$this->lastCacheKey_ = $cacheKey;
+		$this->lastCacheValue_ = $cacheValue;
+	}
+	
+	/**
+	 * 执行SQL, 返回数据(会使用缓存)
+	 * @param unknown $sql
+	 * @return
+	 */
+	private function excuteSql($sql, $dataItemCode, $cacheKey) {
+		// 先查缓存
+		$rawData = $this->getCache($cacheKey);
+		if ($rawData === false) {
+			// 缓存没有, 查数据库
+			$result = mysql_query($sql, $this->conn_);
+			$rawData = array();
+			while ($row = mysql_fetch_assoc($result)) {
+				$rawData[] = $row;
+			}
+			$this->setCache($cacheKey, $rawData);
+		} 
+		$ret = array();
+		// 处理数据
+		foreach ($rawData as $row) {
+			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
+		}
+		return $ret;
+	}
 	
 	public function __construct() {
 		$this->conn_ = mysql_connect(MYSQL_HOST, MYSQL_USERNAME, MYSQL_PASSWORD);
@@ -27,12 +78,7 @@ class Data {
 		global $CODE2TABLE;
 		$table = $CODE2TABLE[$dataItemCode];
 		$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
-        $result = mysql_query($sql, $this->conn_);
-		$ret = array();
-		while ($row = mysql_fetch_assoc($result)) {
-			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
-		}
-		return $ret;
+		return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
 	}
 	
 	/**
@@ -45,12 +91,7 @@ class Data {
 		global $CODE2TABLE;
 		$table = $CODE2TABLE[$dataItemCode];
 		$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' order by id desc limit 1";
-		$result = mysql_query($sql, $this->conn_);
-		$ret = array();
-		while ($row = mysql_fetch_assoc($result)) {
-			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
-		}
-		return $ret;
+		return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
 	}
 	
 	/**
@@ -72,11 +113,6 @@ class Data {
 		$dataTimeEnd = date('Y-m-d', strtotime(date('Y-m-01', $t)) - 1);
 		
 		$sql = "select * from {$table} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' order by id desc limit 1";
-		$result = mysql_query($sql, $this->conn_);
-		$ret = array();
-		while ($row = mysql_fetch_assoc($result)) {
-			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
-		}
-		return $ret;
+		return $this->excuteSql($sql, $dataItemCode, "{$table}_{$ym}");
 	}
 }
