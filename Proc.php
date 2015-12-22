@@ -156,3 +156,8 @@ function proc_7C10($row) { return $row['HARMONIC_CURRENT_C_16']; }
 function proc_7C11($row) { return $row['HARMONIC_CURRENT_C_17']; }
 function proc_7C12($row) { return $row['HARMONIC_CURRENT_C_18']; }
 function proc_7C13($row) { return $row['HARMONIC_CURRENT_C_19']; }
+
+// 谐波电压含有量
+function proc_7102($left, $right) {
+	return $left['PHASE_VOLTAGE_A'] * $right['HARMONIC_VOLTAGE_A_2'];
+}

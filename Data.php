@@ -55,12 +55,83 @@ class Data {
 			}
 			$this->setCache($cacheKey, $rawData);
 		} 
+		// 采样
+		$rawData = $this->sampleData($rawData);
 		$ret = array();
 		// 处理数据
 		foreach ($rawData as $row) {
 			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
 		}
 		return $ret;
+	}
+	
+	/**
+	 * 批量执行SQL, 多表执行结果整体缓存
+	 * @param unknown $sqls
+	 * @param unknown $dataItemCode
+	 * @param unknown $cacheKey
+	 * @return
+	 */
+	private function excuteMultiSql($sqls, $dataItemCode, $cacheKey) {
+		// 先查缓存
+		$rawData = $this->getCache($cacheKey);
+		if ($rawData === false) {
+			// 缓存没有, 查数据库
+			$rawData = array();
+			foreach ($sqls as $sql) {
+				$result = mysql_query($sql, $this->conn_);
+				$sqlData = array();
+				while ($row = mysql_fetch_assoc($result)) {
+					$sqlData[] = $row;
+				}
+				$rawData[] = $sqlData;
+			}
+			$this->setCache($cacheKey, $rawData);
+		}
+		
+		// 逐表采样
+		$sampleData = array();
+		foreach ($rawData as $sqlData) {
+			 $sqlData = $this->sampleData($sqlData);
+			 if (count($sqlData) != CURVE_COUNT) { // 采样点不足, 放弃计算
+			 	return false;
+			 }
+			 $sampleData[] = $sqlData;
+		}
+		
+		$ret = array();
+		// 处理数据
+		for ($i = 0; $i < CURVE_COUNT; ++$i) {
+			$row = array();
+			for ($j = 0; $j < count($sqls); ++$j) {
+				$row[] = $sampleData[$j][$i];
+			}
+			$ret[] = call_user_func_array('proc_' . $dataItemCode, $row);
+		}
+		return $ret;
+	}
+	
+	/**
+	 * 采样数据点
+	 * @param unknown $data
+	 * @return
+	 */
+	private function sampleData($data) {
+		// 保留96个采样点
+		$segSize = intval(count($data) / CURVE_COUNT);
+		if ($segSize < 1) {
+			$segSize = 1;
+		}
+		$dataValues = array();
+		$segIndex = 0;
+		while (count($dataValues) < CURVE_COUNT) {
+			$index = $segIndex++ * $segSize;
+			if ($index >= count($data)) {
+				break;
+			}
+			$dataValues[] = $data[$index];
+		}
+		return $dataValues;
 	}
 	
 	public function __construct() {
@@ -77,8 +148,19 @@ class Data {
 	public function pointCurveData($dataItemCode, $dataTime) {
 		global $CODE2TABLE;
 		$table = $CODE2TABLE[$dataItemCode];
-		$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
-		return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
+		
+		// 单表计算上报
+		if (!is_array($table)) {
+			$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
+			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
+		} 
+		
+		// 多表计算上报
+		$sqls = array();
+		foreach ($table as $t) {
+			$sqls[] = "select * from {$t} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
+		}
+		return $this->excuteMultiSql($sqls, $dataItemCode, implode('_', $table) . "_" . $dataTime);
 	}
 	
 	/**

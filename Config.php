@@ -23,6 +23,10 @@ const MYSQL_DATABASE = 'demo';
 const CONS_NO = '0700069044';
 // 监测点编号
 const MS_NO = '0700069044';
+// 曲线采样间隔(默认15分钟)
+const CURVE_DENSITY = 15;
+// 曲线采样数量(15分钟间隔，共96个采样点)
+const CURVE_COUNT = 96;
 // 数据项 => MYSQL表名的映射
 $CODE2TABLE = array(
 	'9010' => 'pdsm_2x1x13s', // 电量
@@ -150,6 +154,18 @@ $CODE2TABLE = array(
     '7C12' => 'pdsm_2x3x3s',
     '7C13' => 'pdsm_2x3x3s',
     
+	// A谐波电压含有量 = A电压 * A谐波电压含有率
+	'7102' => array('pdsm_2x1x1s' , 'pdsm_2x2x1s'),
+	
+	// B谐波电压含有量 = B电压 * B谐波电压含有率	
+	
+	// C谐波电压含有量 = C电压 * C谐波电压含有率
+	
+	// A谐波电流含有量 = A电压 * A谐波电流含有率
+	
+	// B谐波电流含有量 = B电压 * B谐波电流含有率
+	
+	// C谐波电流含有量 = C电压 * C谐波电流含有率
 );
 // 需要上报EMS的数据项列表
 $CODE_LIST = array(
@@ -196,4 +212,9 @@ $CODE_LIST = array(
 	'7C0B','7C0C','7C0D',
 	'7C0E','7C0F','7C10',
 	'7C11','7C12','7C13',
+	
+	// 谐波电压含有率相关
+	'7102',
+	
+	// 谐波电流含有率相关
 );

@@ -62,7 +62,7 @@ class EmsClient {
         
         // 采集周期
         $xmlWriter->startElement('CURVE_DENSITY');
-        $xmlWriter->text(15);
+        $xmlWriter->text(CURVE_DENSITY);
         $xmlWriter->endElement();
 
         // 数据类型
