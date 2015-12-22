@@ -98,7 +98,6 @@ class Data {
 			 }
 			 $sampleData[] = $sqlData;
 		}
-		
 		$ret = array();
 		// 处理数据
 		for ($i = 0; $i < CURVE_COUNT; ++$i) {
