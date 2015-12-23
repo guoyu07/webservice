@@ -28,7 +28,7 @@ const MS_NO = '0700069044';
 // 曲线采样间隔(默认15分钟)
 const CURVE_DENSITY = 15;
 // 曲线采样数量(15分钟间隔，共96个采样点)
-const CURVE_COUNT = 5;
+const CURVE_COUNT = 96;
 // 数据项 => MYSQL表名的映射
 $CODE2TABLE = array(
 	'9010' => 'pdsm_2x1x13s', // 电量

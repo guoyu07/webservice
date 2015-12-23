@@ -20,14 +20,15 @@ class EmsClient {
 		$soapClient = new SoapClient(null, array(
 				'uri' => SOAP_URI,
 				'location' => SOAP_LOCATION,
-				'soap_version' => SOAP_1_1,
+				'soap_version' => SOAP_1_2,
+				'style' => SOAP_RPC,
 				'trace' => true
 		));
-		$header = new SoapHeader(SOAP_NAMESPACE, 'field', array(
-			'beanId' => $beanId, 
-			'clazz' => $clazz, 
-			'methodName' => $method, 
-			'userId' => '',		
+		$header = new SoapHeader(SOAP_NAMESPACE, 'field', (Object)array(
+			new SoapVar($beanId, XSD_STRING, null, null, 'beanId', SOAP_NAMESPACE),
+			new SoapVar($clazz, XSD_STRING, null, null, 'clazz', SOAP_NAMESPACE),
+			new SoapVar($method, XSD_STRING, null, null, 'methodName', SOAP_NAMESPACE),
+			new SoapVar($userId, XSD_STRING, null, null, 'userId', SOAP_NAMESPACE),
 		));
 		$soapClient->__setSoapHeaders($header);
 		return $soapClient;
@@ -64,15 +65,13 @@ class EmsClient {
 		for ($i = 0; $i < 5; ++$i) { // 重试5次放弃
 			try {
 				$params = array(
-						'receiveStrXml' => base64_encode($request), // XML需要base64编码
-						'encryptBytes' => $encryptBytes
+						new SoapVar(base64_encode($request), XSD_STRING, null, null, 'receiveStrXml'),// XML需要base64编码
+						new SoapVar($encryptBytes, XSD_STRING, null, null, 'encryptBytes'),
 				);
-				$response = $soapClient->psmSevice($params); 
+				$response = $soapClient->__soapcall('psmSevice', $params); 
 			} catch (Exception $e) {
 				echo $soapClient->__getLastRequest();
 				echo $soapClient->__getLastResponse();
-				echo "[times=$i]" . $e->getMessage() . PHP_EOL;
-				die();
 				continue;
 			}
 			return $response;

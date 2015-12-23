@@ -215,7 +215,7 @@ class Data {
 		
 		// 单表计算上报
 		if (!is_array($table)) {
-			$sql = "select * from {$table} as tt where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' group by DEVICE_ID order by id desc";
+			$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' order by id desc";
 			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
 		}
 		
@@ -247,13 +247,13 @@ class Data {
 		
 		// 单表计算上报
 		if (!is_array($table)) {
-			$sql = "select * from {$table} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' group by DEVICE_ID order by id desc";
+			$sql = "select * from {$table} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' order by id desc";
 			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$ym}");
 		}
 		// 多表计算上报
 		$sqls = array();
 		foreach ($table as $t) {
-			$sqls[] = "select * from {$t} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' group by DEVICE_ID order by id desc";
+			$sqls[] = "select * from {$t} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' order by id desc";
 		}
 		return $this->excuteMultiSql($sqls, $dataItemCode, implode('_', $table) . "_" . $ym);
 	}
