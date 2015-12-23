@@ -20,6 +20,7 @@ require_once 'Config.php';
 
 ini_set('date.timezone', 'PRC');
 ini_set('display_errors', 'On');
+ini_set('default_socket_timeout', 5);
 
 if ($argc < 2 ||
 		 !in_array($argv[1], array('monitorPointCurveService', 'monitorDailyFreezService', 'monitorMonFreezService'))) {

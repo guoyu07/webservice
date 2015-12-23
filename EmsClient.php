@@ -31,6 +31,21 @@ class EmsClient {
 		$soapClient->__setSoapHeaders($header);
 		return $soapClient;
 	}
+	
+	private function encrypt($input, $key) {
+		if (strlen($key) > 8) {
+			$key = substr($key, 0, 8);
+		}
+		$size = mcrypt_get_block_size ('des', 'ecb');
+		$str = $this->pkcs5Pad ( $input, $size );
+		$data = mcrypt_encrypt(MCRYPT_DES, $key, $str, MCRYPT_MODE_ECB);
+		return bin2hex($data);
+	}
+	 
+	private function pkcs5Pad($text, $blocksize) {
+		$pad = $blocksize - (strlen($text) % $blocksize);
+		return $text . str_repeat(chr($pad), $pad);
+	}
 
 	/**
 	 * 发起soap请求
@@ -42,16 +57,23 @@ class EmsClient {
 	 * @return
 	 */
 	private  function doSoapRequest($soapClient, $request, $clazz, $method, $beanId, $userId = '') {
-		try {
-			$response = $soapClient->psmSevice(array(
-					'receiveStrXml' => base64_encode($request), // XML需要base64编码 
-					'encryptBytes' => '123123'
-			)); 
-		} catch (Exception $e) {
-			echo $e->getMessage() . PHP_EOL;
-			return null;	
+		// 加密Head里的内容用作身份验证
+		$encryptBytes = $this->encrypt($beanId . $clazz . $method . $userId, SOAP_DES_KEY);
+		
+		for ($i = 0; $i < 5; ++$i) { // 重试5次放弃
+			try {
+				$params = array(
+						'receiveStrXml' => base64_encode($request), // XML需要base64编码
+						'encryptBytes' => $encryptBytes
+				);
+				$response = $soapClient->psmSevice($params); 
+			} catch (Exception $e) {
+				echo "[times=$i]" . $e->getMessage() . PHP_EOL;
+				continue;
+			}
+			return $response;
 		}
-		return $response;
+		return null;
 	}
 	
 	/**
