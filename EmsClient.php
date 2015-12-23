@@ -20,7 +20,8 @@ class EmsClient {
 		$soapClient = new SoapClient(null, array(
 				'uri' => SOAP_URI,
 				'location' => SOAP_LOCATION,
-				'soap_version' => SOAP_1_1
+				'soap_version' => SOAP_1_1,
+				'trace' => true
 		));
 		$header = new SoapHeader(SOAP_NAMESPACE, 'field', array(
 			'beanId' => $beanId, 
@@ -68,7 +69,10 @@ class EmsClient {
 				);
 				$response = $soapClient->psmSevice($params); 
 			} catch (Exception $e) {
+				echo $soapClient->__getLastRequest();
+				echo $soapClient->__getLastResponse();
 				echo "[times=$i]" . $e->getMessage() . PHP_EOL;
+				die();
 				continue;
 			}
 			return $response;
