@@ -8,7 +8,7 @@ require_once 'Config.php';
  * @author liangdong01@baidu.com
  *
  */
-class EmsClient {		
+class EmsClient {			
 	/**
 	 * 获取客户端, 会设置一些header
 	 * @param unknown $clazz
@@ -22,6 +22,13 @@ class EmsClient {
 				'location' => SOAP_LOCATION,
 				'soap_version' => SOAP_1_1
 		));
+		$header = new SoapHeader(SOAP_NAMESPACE, 'field', array(
+			'beanId' => $beanId, 
+			'clazz' => $clazz, 
+			'methodName' => $method, 
+			'userId' => '',		
+		));
+		$soapClient->__setSoapHeaders($header);
 		return $soapClient;
 	}
 
@@ -35,15 +42,13 @@ class EmsClient {
 	 * @return
 	 */
 	private  function doSoapRequest($soapClient, $request, $clazz, $method, $beanId, $userId = '') {
-		var_dump($request);
-		return;
 		try {
 			$response = $soapClient->psmSevice(array(
-					'receiveStrXml' => $request, 
-					'encryptBytes' => ''
+					'receiveStrXml' => base64_encode($request), // XML需要base64编码 
+					'encryptBytes' => '123123'
 			)); 
 		} catch (Exception $e) {
-			echo $e->getMessage();
+			echo $e->getMessage() . PHP_EOL;
 			return null;	
 		}
 		return $response;

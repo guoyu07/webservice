@@ -3,14 +3,14 @@
  * 全局参数配置
  */
 
-// SOAP认证账号
-const SOAP_AUTH_ACCOUNT = '0700069044';
-// SOAP认证密码
-const SOAP_AUTH_PASSWORD = 'zckj1111';
+// SOAP对称密钥
+const SOAP_DES_KEY= '12#@23ASDFVgh&*^%#cbmGADSfLKJLJKdfalsdkj';
 // SOAP服务命名空间
 const SOAP_URI = 'http://axisservice.webservice.cepri.sgcc.com';
 // SOAP服务地址
 const SOAP_LOCATION = 'http://dsm.sx.sgcc.com.cn/axis2/services/psmService';
+// SOAP命名空间
+const SOAP_NAMESPACE = 'http://ws.apache.org/axis2';
 
 // MYSQL地址
 const MYSQL_HOST = '10.36.253.127:6184';
