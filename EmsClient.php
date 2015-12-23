@@ -12,12 +12,14 @@ class EmsClient {
 	private $soapClient_ = null;
 	
 	public function __construct() {
-        try {
-            $this->soapClient_ = new SoapClient(SOAP_WSDL, array(
-                        'login' => SOAP_AUTH_ACCOUNT, 'password' => SOAP_AUTH_PASSWORD
-                        ));
-        } catch (Exception $e) {
-        }
+       // try {
+            $this->soapClient_ = new SoapClient(null, array(
+            	'uri' => SOAP_URI,
+            	'location' => SOAP_LOCATION,
+            	'soap_version' => SOAP_1_1	
+            ));
+     //   } catch (Exception $e) {
+      //  }
 	}
 	
 	/**

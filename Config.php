@@ -7,8 +7,10 @@
 const SOAP_AUTH_ACCOUNT = '0700069044';
 // SOAP认证密码
 const SOAP_AUTH_PASSWORD = 'zckj1111';
+// SOAP服务命名空间
+const SOAP_URI = 'http://axisservice.webservice.cepri.sgcc.com';
 // SOAP服务地址
-const SOAP_WSDL = 'http://dsm.sx.sgcc.com.cn/axis2/services/psmService?wsdl';
+const SOAP_LOCATION = 'http://dsm.sx.sgcc.com.cn/axis2/services/psmService';
 
 // MYSQL地址
 const MYSQL_HOST = '10.36.253.127:6184';
