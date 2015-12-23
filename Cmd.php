@@ -13,7 +13,7 @@ function HandleCmdDailyFreez($data, $emsClient, $dataItemCode, $dataTime) {
 	if (!is_array($result) || !count($result)) { // 没有数据不提交
 		return;
 	}
-	$emsClient->monitorDailyFreezService($dataItemCode, $dataTime, $result[0]);
+	$emsClient->monitorDailyFreezService($dataItemCode, $dataTime, $result);
 }
 
 function HandleCmdMonFreez($data, $emsClient, $dataItemCode, $ym) {
@@ -21,5 +21,5 @@ function HandleCmdMonFreez($data, $emsClient, $dataItemCode, $ym) {
 	if (!is_array($result) || !count($result)) { // 没有数据不提交
 		return;
 	}
-	$emsClient->monitorMonFreezService($dataItemCode, $ym, $result[0]);
+	$emsClient->monitorMonFreezService($dataItemCode, $ym, $result);
 }

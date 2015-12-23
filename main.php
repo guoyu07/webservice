@@ -18,6 +18,9 @@ require_once 'Data.php';
 require_once 'Cmd.php';
 require_once 'Config.php';
 
+ini_set('date.timezone', 'PRC');
+ini_set('display_errors', 'On');
+
 if ($argc < 2 ||
 		 !in_array($argv[1], array('monitorPointCurveService', 'monitorDailyFreezService', 'monitorMonFreezService'))) {
 	echo 'usage: php main.php monitorPointCurveService|monitorDailyFreezService|monitorMonFreezService [reportDate]' . PHP_EOL;

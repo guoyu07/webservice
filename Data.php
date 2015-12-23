@@ -43,7 +43,7 @@ class Data {
 	 * @param unknown $sql
 	 * @return
 	 */
-	private function excuteSql($sql, $dataItemCode, $cacheKey) {
+	private function excuteSql($sql, $dataItemCode, $cacheKey, $curveCount = 1) {
 		// 先查缓存
 		$rawData = $this->getCache($cacheKey);
 		if ($rawData === false) {
@@ -54,15 +54,28 @@ class Data {
 				$rawData[] = $row;
 			}
 			$this->setCache($cacheKey, $rawData);
-		} 
-		// 采样
-		$rawData = $this->sampleData($rawData);
-		$ret = array();
-		// 处理数据
-		foreach ($rawData as $row) {
-			$ret[] = call_user_func('proc_' . $dataItemCode, $row);
 		}
-		return $ret;
+		
+		// 按设备ID划分
+		$deviceMap = array();
+		foreach ($rawData as $row) {
+			$deviceMap[$row['DEVICE_ID']][] = $row;
+		}
+		// 每个设备ID进行采样
+		$result = array();
+		foreach ($deviceMap as $deviceId => $deviceData) {
+			$deviceData = $this->sampleData($deviceData, $curveCount);
+			if (count($deviceData) != $curveCount) { // 设备采样点不足
+				continue;
+			}
+			$ret = array();
+			// 处理数据
+			foreach ($deviceData as $row) {
+				$ret[] = call_user_func('proc_' . $dataItemCode, $row);
+			}
+			$result[$deviceId] = $ret;
+		}
+		return $result;
 	}
 	
 	/**
@@ -72,7 +85,7 @@ class Data {
 	 * @param unknown $cacheKey
 	 * @return
 	 */
-	private function excuteMultiSql($sqls, $dataItemCode, $cacheKey) {
+	private function excuteMultiSql($sqls, $dataItemCode, $cacheKey, $curveCount = 1) {
 		// 先查缓存
 		$rawData = $this->getCache($cacheKey);
 		if ($rawData === false) {
@@ -89,25 +102,53 @@ class Data {
 			$this->setCache($cacheKey, $rawData);
 		}
 		
-		// 逐表采样
-		$sampleData = array();
+		$deviceIds = array(); // 记录涉及到的所有device id
+		$deviceMapArr = array();
+		// 每张表, 分别按设备ID分组
 		foreach ($rawData as $sqlData) {
-			 $sqlData = $this->sampleData($sqlData);
-			 if (count($sqlData) != CURVE_COUNT) { // 采样点不足, 放弃计算
-			 	return false;
-			 }
-			 $sampleData[] = $sqlData;
-		}
-		$ret = array();
-		// 处理数据
-		for ($i = 0; $i < CURVE_COUNT; ++$i) {
-			$row = array();
-			for ($j = 0; $j < count($sqls); ++$j) {
-				$row[] = $sampleData[$j][$i];
+			$deviceMap = array();
+			foreach ($sqlData as $row) {
+				$deviceMap[$row['DEVICE_ID']][] = $row;
+				$deviceIds[$row['DEVICE_ID']] = true;
 			}
-			$ret[] = call_user_func_array('proc_' . $dataItemCode, $row);
+			$deviceMapArr[] = $deviceMap;
 		}
-		return $ret;
+		$deviceIds = array_keys($deviceIds);
+	
+		$result = array();
+		
+		// 逐个设备处理
+		foreach ($deviceIds as $deviceId) {
+			// 对指定的设备，到每张表里进行采样
+			$cont = true;
+			$sampleData = array();
+			foreach ($deviceMapArr as $deviceMap) {
+				if (empty($deviceMap[$deviceId])) { // 每张表里没有该设备的采样信息, 跳过该设备
+					$cont = false;
+					break;
+				}
+				$sample = $this->sampleData($deviceMap[$deviceId], $curveCount); // 对该表内该设备采样
+				if (count($sample) != $curveCount) { // 采样点不足, 跳过该设备
+					$cont = false;
+					break;
+				}
+				$sampleData[] = $sample;
+			}
+			if (!$cont) { // 该设备无法从所有表中取得采样信息, 跳过该设备的信息上报
+				continue;
+			}
+			$ret = array();
+			// 处理数据
+			for ($i = 0; $i < $curveCount; ++$i) {
+				$row = array();
+				for ($j = 0; $j < count($sqls); ++$j) {
+					$row[] = $sampleData[$j][$i];
+				}
+				$ret[] = call_user_func_array('proc_' . $dataItemCode, $row);
+			}
+			$result[$deviceId] = $ret;
+		}
+		return $result;
 	}
 	
 	/**
@@ -115,15 +156,15 @@ class Data {
 	 * @param unknown $data
 	 * @return
 	 */
-	private function sampleData($data) {
+	private function sampleData($data, $curveCount) {
 		// 保留96个采样点
-		$segSize = intval(count($data) / CURVE_COUNT);
+		$segSize = intval(count($data) / $curveCount);
 		if ($segSize < 1) {
 			$segSize = 1;
 		}
 		$dataValues = array();
 		$segIndex = 0;
-		while (count($dataValues) < CURVE_COUNT) {
+		while (count($dataValues) < $curveCount) {
 			$index = $segIndex++ * $segSize;
 			if ($index >= count($data)) {
 				break;
@@ -151,7 +192,7 @@ class Data {
 		// 单表计算上报
 		if (!is_array($table)) {
 			$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
-			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
+			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}", CURVE_COUNT);
 		} 
 		
 		// 多表计算上报
@@ -159,7 +200,7 @@ class Data {
 		foreach ($table as $t) {
 			$sqls[] = "select * from {$t} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59'";
 		}
-		return $this->excuteMultiSql($sqls, $dataItemCode, implode('_', $table) . "_" . $dataTime);
+		return $this->excuteMultiSql($sqls, $dataItemCode, implode('_', $table) . "_" . $dataTime, CURVE_COUNT);
 	}
 	
 	/**
@@ -171,8 +212,19 @@ class Data {
 	public function dailyFreez($dataItemCode, $dataTime) {
 		global $CODE2TABLE;
 		$table = $CODE2TABLE[$dataItemCode];
-		$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' order by id desc limit 1";
-		return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
+		
+		// 单表计算上报
+		if (!is_array($table)) {
+			$sql = "select * from {$table} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' group by DEVICE_ID order by id desc";
+			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$dataTime}");
+		}
+		
+		// 多表计算上报
+		$sqls = array();
+		foreach ($table as $t) {
+			$sqls[] = "select * from {$t} where DATE>='{$dataTime} 00:00:00' and DATE<='{$dataTime} 23:59:59' order by id desc";
+		}
+		return $this->excuteMultiSql($sqls, $dataItemCode, implode('_', $table) . "_" . $dataTime);
 	}
 	
 	/**
@@ -193,7 +245,16 @@ class Data {
 		$dataTimeBeg = "$year-$mon-01";
 		$dataTimeEnd = date('Y-m-d', strtotime(date('Y-m-01', $t)) - 1);
 		
-		$sql = "select * from {$table} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' order by id desc limit 1";
-		return $this->excuteSql($sql, $dataItemCode, "{$table}_{$ym}");
+		// 单表计算上报
+		if (!is_array($table)) {
+			$sql = "select * from {$table} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' group by DEVICE_ID order by id desc";
+			return $this->excuteSql($sql, $dataItemCode, "{$table}_{$ym}");
+		}
+		// 多表计算上报
+		$sqls = array();
+		foreach ($table as $t) {
+			$sqls[] = "select * from {$t} where DATE>='{$dataTimeBeg} 00:00:00' and DATE<='{$dataTimeEnd} 23:59:59' group by DEVICE_ID order by id desc";
+		}
+		return $this->excuteMultiSql($sqls, $dataItemCode, implode('_', $table) . "_" . $ym);
 	}
 }
