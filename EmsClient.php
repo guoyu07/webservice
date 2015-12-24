@@ -34,7 +34,19 @@ class EmsClient {
 		return $soapClient;
 	}
 	
+	/**
+	 * DES签名head里的信息
+	 * 
+	 * 服务端用的是JAVA JCE特有的DES加密，PHP无法兼容，需使用JAVA预生成后配置到Config.php里
+	 * @param unknown $input
+	 * @param unknown $key
+	 * @return
+	 */
 	private function encrypt($input, $key) {
+		global $ENCRYPT_INFO;
+		return $ENCRYPT_INFO[$input];
+		
+		/*
 		if (strlen($key) > 8) {
 			$key = substr($key, 0, 8);
 		}
@@ -42,11 +54,15 @@ class EmsClient {
 		$str = $this->pkcs5Pad ( $input, $size );
 		$data = mcrypt_encrypt(MCRYPT_DES, $key, $str, MCRYPT_MODE_ECB);
 		return bin2hex($data);
+		*/
 	}
 	 
 	private function pkcs5Pad($text, $blocksize) {
 		$pad = $blocksize - (strlen($text) % $blocksize);
-		return $text . str_repeat(chr($pad), $pad);
+		for ($i = 0; $i < $pad; ++$i) {
+			$text .= chr(0);
+		}
+		return $text;
 	}
 
 	/**
@@ -61,7 +77,6 @@ class EmsClient {
 	private  function doSoapRequest($soapClient, $request, $clazz, $method, $beanId, $userId = '') {
 		// 加密Head里的内容用作身份验证
 		$encryptBytes = $this->encrypt($beanId . $clazz . $method . $userId, SOAP_DES_KEY);
-		
 		for ($i = 0; $i < 5; ++$i) { // 重试5次放弃
 			try {
 				$params = array(
@@ -74,6 +89,7 @@ class EmsClient {
 				echo $soapClient->__getLastResponse();
 				continue;
 			}
+			var_dump($response);
 			return $response;
 		}
 		return null;

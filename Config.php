@@ -11,6 +11,18 @@ const SOAP_URI = 'http://axisservice.webservice.cepri.sgcc.com';
 const SOAP_LOCATION = 'http://dsm.sx.sgcc.com.cn/axis2/services/psmService';
 // SOAP命名空间
 const SOAP_NAMESPACE = 'http://ws.apache.org/axis2';
+// 方法密钥(用DesUtil工具提前生成好, 因为JAVA用JCE的DES，PHP无法兼容)
+$ENCRYPT_INFO = array(
+// 曲线
+'commonWsServicecom.sgcc.psm.psmapi.emsenergy.datamanage.monitorpointcurve.bizc.impl.MonitorPointCurveBizcImplmonitorPointCurveService' =>
+'aba680d3d6a1fd086d5efc950a0d88e7d5f93d21277c3c19887147ffe53bb4086a1c1fcc7eeecfb8bca18a76f9cb8f94726785c79c873f8cfb149e14f7835a5d0e9e95be9fa85eba4075852cbe807de45410375c126f57864567962f2b6a26bd605d26f8bc92b4e4f7ed5045396a729f9dbd1eb91718129e3ac1d67eb273804455cefc435cbfd8f3',
+// 日冻结
+'commonWsServicecom.sgcc.psm.psmapi.emsenergy.datamanage.monitordailyfreez.bizc.impl.MonitorDailyFreezBizcImplmonitorDailyFreezService'=>
+'aba680d3d6a1fd086d5efc950a0d88e7d5f93d21277c3c19887147ffe53bb4086a1c1fcc7eeecfb8bca18a76f9cb8f94726785c79c873f8c3739bf33ff4fd5838e1be1e22795bdd6bf30a522cac4093b5410375c126f578690853ad41957646d01fddb48a3f8ec11f7ed5045396a729ff75c2ffc43722614e985c59e0e86603b55cefc435cbfd8f3',
+// 月冻结
+'commonWsServicecom.sgcc.psm.psmapi.emsenergy.datamanage.monitormonfreez.bizc.impl.MonitorMonFreezBizcImplmonitorMonFreezService'=>
+'aba680d3d6a1fd086d5efc950a0d88e7d5f93d21277c3c19887147ffe53bb4086a1c1fcc7eeecfb8bca18a76f9cb8f94726785c79c873f8c4f13c8d26a98a103c1c56b650f48734a1a45145b476a9003fbf8a29c3c6c324c0144580630787899487ecaf11f25be2b997e53a25276ca4a318578b3f75c0c3d34d77896f15b97e4',
+);
 
 // MYSQL地址
 const MYSQL_HOST = '10.36.253.127:6184';
