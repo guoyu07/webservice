@@ -29,6 +29,7 @@ class EmsClient {
 			new SoapVar($clazz, XSD_STRING, null, null, 'clazz', SOAP_NAMESPACE),
 			new SoapVar($method, XSD_STRING, null, null, 'methodName', SOAP_NAMESPACE),
 			new SoapVar($userId, XSD_STRING, null, null, 'userId', SOAP_NAMESPACE),
+			new SoapVar('testing', XSD_STRING, null, null, 'token', SOAP_NAMESPACE),
 		));
 		$soapClient->__setSoapHeaders($header);
 		return $soapClient;
@@ -45,7 +46,6 @@ class EmsClient {
 	private function encrypt($input, $key) {
 		global $ENCRYPT_INFO;
 		return $ENCRYPT_INFO[$input];
-		
 		/*
 		if (strlen($key) > 8) {
 			$key = substr($key, 0, 8);
@@ -54,7 +54,7 @@ class EmsClient {
 		$str = $this->pkcs5Pad ( $input, $size );
 		$data = mcrypt_encrypt(MCRYPT_DES, $key, $str, MCRYPT_MODE_ECB);
 		return bin2hex($data);
-		*/
+        */
 	}
 	 
 	private function pkcs5Pad($text, $blocksize) {
@@ -81,15 +81,16 @@ class EmsClient {
 			try {
 				$params = array(
 						new SoapVar(base64_encode($request), XSD_STRING, null, null, 'receiveStrXml'),// XML需要base64编码
-						new SoapVar($encryptBytes, XSD_STRING, null, null, 'encryptBytes'),
+						new SoapVar(base64_encode($encryptBytes), XSD_STRING, null, null, 'encryptBytes'),
 				);
 				$response = $soapClient->__soapcall('psmSevice', $params); 
 			} catch (Exception $e) {
-				echo $soapClient->__getLastRequest();
+                echo "[request fail for times=$i]$beanId | $clazz | $method | $userId" . PHP_EOL;
+				//echo $soapClient->__getLastRequest();
 				echo $soapClient->__getLastResponse();
 				continue;
 			}
-			var_dump($response);
+			echo "[request succeed] $response" . PHP_EOL;
 			return $response;
 		}
 		return null;
