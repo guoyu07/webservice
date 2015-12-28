@@ -14,6 +14,29 @@ class Data {
 	// 缓存最近一次查询结果(提高同表多数据项上报的处理性能)
 	private $lastCacheKey_ = null;
 	private $lastCacheValue_ = null;
+	private $standardDevice = array();
+	
+	/**
+	 * 根据设备自增ID获取标准设备ID
+	 * @param unknown $deviceId
+	 * @return
+	 */
+	private function getStandardDevice($deviceId) {
+		if (empty($this->standardDevice)) {
+			$sql = "select * from pdsm_devices";
+			$devices = mysql_query($sql, $this->conn_);
+			if (!empty($devices)) {
+				$this->standardDevice = array();
+				while ($device = mysql_fetch_assoc($devices)) {
+					$this->standardDevice[$device['DEVICE_ID']] = $device;
+				}
+			}
+		}
+		if (isset($this->standardDevice[$deviceId])) {
+			return $this->standardDevice[$deviceId]['STANDARD_DEVICE'];
+		}
+		return false;
+	}
 	
 	/**
 	 * 获取最近一次缓存的查询结果
@@ -64,6 +87,10 @@ class Data {
 		// 每个设备ID进行采样
 		$result = array();
 		foreach ($deviceMap as $deviceId => $deviceData) {
+			$standardDeviceId = $this->getStandardDevice($deviceId);
+			if (empty($standardDeviceId)) {
+				continue;
+			}
 			$deviceData = $this->sampleData($deviceData, $curveCount);
 			if (count($deviceData) != $curveCount) { // 设备采样点不足
 				continue;
@@ -73,7 +100,7 @@ class Data {
 			foreach ($deviceData as $row) {
 				$ret[] = call_user_func('proc_' . $dataItemCode, $row);
 			}
-			$result[$deviceId] = $ret;
+			$result[$standardDeviceId] = $ret;
 		}
 		return $result;
 	}
@@ -119,6 +146,10 @@ class Data {
 		
 		// 逐个设备处理
 		foreach ($deviceIds as $deviceId) {
+			$standardDeviceId = $this->getStandardDevice($deviceId);
+			if (empty($standardDeviceId)) {
+				continue;
+			}
 			// 对指定的设备，到每张表里进行采样
 			$cont = true;
 			$sampleData = array();
@@ -146,7 +177,7 @@ class Data {
 				}
 				$ret[] = call_user_func_array('proc_' . $dataItemCode, $row);
 			}
-			$result[$deviceId] = $ret;
+			$result[$standardDeviceId] = $ret;
 		}
 		return $result;
 	}
