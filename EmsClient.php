@@ -90,6 +90,7 @@ class EmsClient {
 				echo $soapClient->__getLastResponse();
 				continue;
 			}
+			//var_dump($request);
 			echo "[request succeed] $response" . PHP_EOL;
 			return $response;
 		}
@@ -112,21 +113,22 @@ class EmsClient {
         // 时间格式YYYYMMDD
         $dataTime = date('Ymd', strtotime($dataTime));
 
-        $xmlWriter = new XMLWriter();
-        $xmlWriter->openMemory();
-        
-        $xmlWriter->startElement('Root');
-        $xmlWriter->startElement('indexDets');
         foreach ($dataValues as $msNo => $values) {
+        	$xmlWriter = new XMLWriter();
+        	$xmlWriter->openMemory();
+        	
+        	$xmlWriter->startElement('Root');
+        	$xmlWriter->startElement('indexDets');
+        	
 	        $xmlWriter->startElement('indexDet');
 	        
 	        // 企业编号
-	        $xmlWriter->startElement('consNO');
+	        $xmlWriter->startElement('consNo');
 	        $xmlWriter->text(CONS_NO);
 	        $xmlWriter->endElement();
 	        
 	        // 监测点编号
-	        $xmlWriter->startElement('msNO');
+	        $xmlWriter->startElement('msNo');
 	        $xmlWriter->text($msNo);
 	        $xmlWriter->endElement();
 	        
@@ -138,6 +140,11 @@ class EmsClient {
 	        // 数据日期
 	        $xmlWriter->startElement('dataDate');
 	        $xmlWriter->text($dataTime);
+	        $xmlWriter->endElement();
+	        
+	        // 数据编号，传0
+	        $xmlWriter->startElement('recordNo');
+	        $xmlWriter->text(0);
 	        $xmlWriter->endElement();
 	        
 	        // 采集周期
@@ -156,14 +163,22 @@ class EmsClient {
 	            $xmlWriter->text($values[$i]);
 	            $xmlWriter->endElement();
 	        }
+	        /*
+	        // 数据值
+	        for ($i = 0; $i < 96; ++$i) {
+	        	$xmlWriter->startElement('dataValue' . strval($i + 1));
+	        	$xmlWriter->text("0");
+	        	$xmlWriter->endElement();
+	        }
+	        */
+	        $xmlWriter->endElement();
 	        
 	        $xmlWriter->endElement();
-        }
-        $xmlWriter->endElement();
-        $xmlWriter->endElement();
+	        $xmlWriter->endElement();
 
-        $request = $xmlWriter->flush();
-        $response = $this->doSoapRequest($soapClient, $request, $clazz, $method, $beanId);
+	        $request = $xmlWriter->flush();
+	        $response = $this->doSoapRequest($soapClient, $request, $clazz, $method, $beanId);
+        }
     }
 	
 	/**
@@ -179,21 +194,22 @@ class EmsClient {
 		$beanId = 'commonWsService';
 		$soapClient = $this->getSoapClient($clazz, $method, $beanId);
 		
-        $xmlWriter = new XMLWriter();
-        $xmlWriter->openMemory();
-        
-        $xmlWriter->startElement('Root');
-        $xmlWriter->startElement('indexDets');
         foreach ($dataValue as $msNo => $values) {
-	        $xmlWriter->startElement('indexDet');
+        	$xmlWriter = new XMLWriter();
+        	$xmlWriter->openMemory();
+        	
+        	$xmlWriter->startElement('Root');
+        	$xmlWriter->startElement('indexDets');
+        	
+        	$xmlWriter->startElement('indexDet');
 	        
 	        // 企业编号
-	        $xmlWriter->startElement('consNO');
+	        $xmlWriter->startElement('consNo');
 	        $xmlWriter->text(CONS_NO);
 	        $xmlWriter->endElement();
 	        
 	        // 监测点编号
-	        $xmlWriter->startElement('msNO');
+	        $xmlWriter->startElement('msNo');
 	        $xmlWriter->text($msNo);
 	        $xmlWriter->endElement();
 	        
@@ -218,12 +234,13 @@ class EmsClient {
 	        $xmlWriter->endElement();
 	        
 	        $xmlWriter->endElement();
-        }
-        $xmlWriter->endElement();
-        $xmlWriter->endElement();
+	        
+	        $xmlWriter->endElement();
+	        $xmlWriter->endElement();
 
-        $request = $xmlWriter->flush();
-        $response = $this->doSoapRequest($soapClient, $request, $clazz, $method, $beanId);
+	        $request = $xmlWriter->flush();
+	        $response = $this->doSoapRequest($soapClient, $request, $clazz, $method, $beanId);
+        }
 	}
 	
 	/**
@@ -239,17 +256,16 @@ class EmsClient {
 		$beanId = 'commonWsService';
 		$soapClient = $this->getSoapClient($clazz, $method, $beanId);
 		
-        $xmlWriter = new XMLWriter();
-        $xmlWriter->openMemory();
-
-        $xmlWriter->startElement('Root');
-        $xmlWriter->startElement('indexDets');
-        
         foreach ($dataValue as $msNo => $values) {
+        	$xmlWriter = new XMLWriter();
+        	$xmlWriter->openMemory();
+        	 
+        	$xmlWriter->startElement('Root');
+        	$xmlWriter->startElement('indexDets');
 	        $xmlWriter->startElement('indexDet');
 	        
 	        // 企业编号
-	        $xmlWriter->startElement('consNO');
+	        $xmlWriter->startElement('consNo');
 	        $xmlWriter->text(CONS_NO);
 	        $xmlWriter->endElement();
 	        
@@ -279,11 +295,12 @@ class EmsClient {
 	        $xmlWriter->endElement();
 	        
 	        $xmlWriter->endElement();
+	        
+	        $xmlWriter->endElement();
+	        $xmlWriter->endElement();
+	        
+	        $request = $xmlWriter->flush();
+	        $response = $this->doSoapRequest($soapClient, $request, $clazz, $method, $beanId);
         }
-        $xmlWriter->endElement();
-        $xmlWriter->endElement();
-
-        $request = $xmlWriter->flush();
-        $response = $this->doSoapRequest($soapClient, $request, $clazz, $method, $beanId);
 	}
 }
