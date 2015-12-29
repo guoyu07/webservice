@@ -90,7 +90,7 @@ class EmsClient {
 				echo $soapClient->__getLastResponse();
 				continue;
 			}
-			//var_dump($request);
+			// var_dump($request);
 			echo "[request succeed] $response" . PHP_EOL;
 			return $response;
 		}
@@ -134,7 +134,7 @@ class EmsClient {
 	        
 	        // 数据项代码
 	        $xmlWriter->startElement('dataItemCode');
-	        $xmlWriter->text($dataItemCode);
+	        $xmlWriter->text(strtoupper($dataItemCode));
 	        $xmlWriter->endElement();
 	
 	        // 数据日期
@@ -163,14 +163,15 @@ class EmsClient {
 	            $xmlWriter->text($values[$i]);
 	            $xmlWriter->endElement();
 	        }
+
 	        /*
 	        // 数据值
 	        for ($i = 0; $i < 96; ++$i) {
 	        	$xmlWriter->startElement('dataValue' . strval($i + 1));
 	        	$xmlWriter->text("0");
 	        	$xmlWriter->endElement();
-	        }
-	        */
+	        }*/
+	        
 	        $xmlWriter->endElement();
 	        
 	        $xmlWriter->endElement();
@@ -194,6 +195,9 @@ class EmsClient {
 		$beanId = 'commonWsService';
 		$soapClient = $this->getSoapClient($clazz, $method, $beanId);
 		
+		// 时间格式YYYYMMDD
+		$dataTime = date('Ymd', strtotime($dataTime));
+		
         foreach ($dataValue as $msNo => $values) {
         	$xmlWriter = new XMLWriter();
         	$xmlWriter->openMemory();
@@ -215,7 +219,7 @@ class EmsClient {
 	        
 	        // 数据项代码
 	        $xmlWriter->startElement('dataItemCode');
-	        $xmlWriter->text($dataItemCode);
+	        $xmlWriter->text(strtoupper($dataItemCode));
 	        $xmlWriter->endElement();
 	
 	        // 数据日期
@@ -276,7 +280,7 @@ class EmsClient {
 	        
 	        // 数据项代码
 	        $xmlWriter->startElement('dataItemCode');
-	        $xmlWriter->text($dataItemCode);
+	        $xmlWriter->text(strtoupper($dataItemCode));
 	        $xmlWriter->endElement();
 	
 	        // 数据日期
